@@ -17,7 +17,7 @@ const users = [
   }
 ];
 
-const posts = [
+let posts = [
   {
     id: '1',
     title: 'foo',
@@ -41,7 +41,7 @@ const posts = [
   }
 ];
 
-const comments = [
+let comments = [
   {
     id: '1',
     text: 'wonderful idea',
@@ -71,7 +71,13 @@ const comments = [
 const db = {
   users,
   posts,
-  comments
+  setPosts(updatedPosts) {
+    posts = updatedPosts;
+  },
+  comments,
+  setComments(updatedComments) {
+    comments = updatedComments;
+  }
 };
 
 export default db;

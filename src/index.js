@@ -1,15 +1,15 @@
 import { GraphQLServer } from 'graphql-yoga';
 import uuidv4 from 'uuid/v4';
-import db from './db';
+import database from './db';
 
 const resolvers = {
   Query: {
-    users(_, args, ctx) {
+    users(_, args, { db }) {
       if (!args.query) {
-        return ctx.db.users;
+        return db.users;
       }
 
-      return ctx.db.users.filter(user => {
+      return db.users.filter(user => {
         return user.name.toLowerCase().includes(args.query.toLowerCase());
       });
     },
@@ -21,12 +21,12 @@ const resolvers = {
         age: null
       };
     },
-    posts(_, args, ctx) {
+    posts(_, args, { db }) {
       if (!args.query) {
-        return ctx.db.posts;
+        return db.posts;
       }
 
-      return ctx.db.posts.filter(
+      return db.posts.filter(
         post =>
           post.title.toLowerCase().includes(args.query.toLowerCase()) ||
           post.body.toLowerCase().includes(args.query.toLowerCase())
@@ -40,13 +40,13 @@ const resolvers = {
         published: false
       };
     },
-    comments(_, _1, ctx) {
-      return ctx.db.comments;
+    comments(_, _1, { db }) {
+      return db.comments;
     }
   },
   Mutation: {
-    createUser(_, args, ctx) {
-      const emailTaken = ctx.db.users.some(user => user.email === args.input.email);
+    createUser(_, args, { db }) {
+      const emailTaken = db.users.some(user => user.email === args.input.email);
 
       if (emailTaken) {
         throw new Error('Email already in use.');
@@ -57,35 +57,37 @@ const resolvers = {
         ...args.input
       };
 
-      ctx.db.users.push(user);
+      db.users.push(user);
 
       return user;
     },
-    deleteUser(_, args, ctx) {
-      const index = ctx.db.users.findIndex(user => user.id === args.id);
+    deleteUser(_, args, { db }) {
+      const index = db.users.findIndex(user => user.id === args.id);
 
       if (index === -1) {
         throw new Error('User with specified ID does not exist.');
       }
 
-      const user = ctx.db.users.splice(index, 1)[0];
+      const user = db.users.splice(index, 1)[0];
 
-      ctx.db.posts = ctx.db.posts.filter(post => {
-        const isMatch = post.author === args.id;
+      db.setPosts(
+        db.posts.filter(post => {
+          const isMatch = post.author === args.id;
 
-        if (isMatch) {
-          ctx.db.comments = ctx.db.comments.filter(comment => comment.post !== post.id);
-        }
+          if (isMatch) {
+            db.setComments(db.comments.filter(comment => comment.post !== post.id));
+          }
 
-        return !isMatch;
-      });
+          return !isMatch;
+        })
+      );
 
-      ctx.db.comments = ctx.db.comments.filter(comment => comment.author !== args.id);
+      db.setComments(db.comments.filter(comment => comment.author !== args.id));
 
       return user;
     },
-    createPost(_, args, ctx) {
-      const userExists = ctx.db.users.some(user => user.id === args.input.author);
+    createPost(_, args, { db }) {
+      const userExists = db.users.some(user => user.id === args.input.author);
 
       if (!userExists) {
         throw new Error('Specified user ID not found.');
@@ -96,25 +98,25 @@ const resolvers = {
         ...args.input
       };
 
-      ctx.db.posts.push(post);
+      db.posts.push(post);
 
       return post;
     },
-    deletePost(_, args, ctx) {
-      const index = ctx.db.posts.findIndex(post => post.id === args.id);
+    deletePost(_, args, { db }) {
+      const index = db.posts.findIndex(post => post.id === args.id);
 
       if (index === -1) {
         throw new Error('Post with specified ID does not exist.');
       }
 
-      const post = ctx.db.posts.splice(index, 1)[0];
-      ctx.db.comments = ctx.db.comments.filter(comment => comment.post !== args.id);
+      const post = db.posts.splice(index, 1)[0];
+      db.setComments(db.comments.filter(comment => comment.post !== args.id));
 
       return post;
     },
-    createComment(_, args, ctx) {
-      const userExists = ctx.db.users.some(user => user.id === args.input.author);
-      const publishedPostExists = ctx.db.posts.some(
+    createComment(_, args, { db }) {
+      const userExists = db.users.some(user => user.id === args.input.author);
+      const publishedPostExists = db.posts.some(
         post => post.id === args.input.post && post.published
       );
 
@@ -128,42 +130,42 @@ const resolvers = {
         ...args.input
       };
 
-      ctx.db.comments.push(comment);
+      db.comments.push(comment);
 
       return comment;
     },
-    deleteComment(_, args, ctx) {
-      const index = ctx.db.comments.findIndex(comment => comment.id === args.id);
+    deleteComment(_, args, { db }) {
+      const index = db.comments.findIndex(comment => comment.id === args.id);
 
       if (index === -1) {
         throw new Error('Comment with specified ID does not exist.');
       }
 
-      return ctx.db.comments.splice(index, 1)[0];
+      return db.comments.splice(index, 1)[0];
     }
   },
   Post: {
-    author(parent, _, ctx) {
-      return ctx.db.users.find(user => user.id === parent.author);
+    author(parent, _, { db }) {
+      return db.users.find(user => user.id === parent.author);
     },
-    comments(parent, _, ctx) {
-      return ctx.db.comments.filter(comment => comment.post === parent.id);
+    comments(parent, _, { db }) {
+      return db.comments.filter(comment => comment.post === parent.id);
     }
   },
   User: {
-    posts(parent, _, ctx) {
-      return ctx.db.posts.filter(post => post.author === parent.id);
+    posts(parent, _, { db }) {
+      return db.posts.filter(post => post.author === parent.id);
     },
-    comments(parent, _, ctx) {
-      return ctx.db.comments.filter(comment => comment.author === parent.id);
+    comments(parent, _, { db }) {
+      return db.comments.filter(comment => comment.author === parent.id);
     }
   },
   Comment: {
-    author(parent, _, ctx) {
-      return ctx.db.users.find(user => user.id === parent.author);
+    author(parent, _, { db }) {
+      return db.users.find(user => user.id === parent.author);
     },
-    post(parent, _, ctx) {
-      return ctx.db.posts.find(post => post.id === parent.post);
+    post(parent, _, { db }) {
+      return db.posts.find(post => post.id === parent.post);
     }
   }
 };
@@ -172,7 +174,7 @@ const server = new GraphQLServer({
   typeDefs: './src/schema.graphql',
   resolvers,
   context: {
-    db
+    db: database
   }
 });
 
