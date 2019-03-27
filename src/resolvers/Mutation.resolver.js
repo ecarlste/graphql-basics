@@ -118,7 +118,7 @@ export default {
 
     return post;
   },
-  createComment(_, args, { db }) {
+  createComment(_, args, { db, pubsub }) {
     const userExists = db.users.some(user => user.id === args.input.author);
     const publishedPostExists = db.posts.some(
       post => post.id === args.input.post && post.published
@@ -135,6 +135,7 @@ export default {
     };
 
     db.comments.push(comment);
+    pubsub.publish(`comment ${comment.post}`, { comment });
 
     return comment;
   },
