@@ -138,6 +138,19 @@ export default {
 
     return comment;
   },
+  updateComment(_, { id, input }, { db }) {
+    const commentToUpdate = db.comments.find(comment => comment.id === id);
+
+    if (!commentToUpdate) {
+      throw new Error('Comment with specified ID not found.');
+    }
+
+    if (typeof input.text === 'string') {
+      commentToUpdate.text = input.text;
+    }
+
+    return commentToUpdate;
+  },
   deleteComment(_, args, { db }) {
     const index = db.comments.findIndex(comment => comment.id === args.id);
 
