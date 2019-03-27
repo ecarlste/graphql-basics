@@ -17,6 +17,33 @@ export default {
 
     return user;
   },
+  updateUser(_, { id, input }, { db }) {
+    const userToUpdate = db.users.find(user => user.id === id);
+
+    if (!userToUpdate) {
+      throw new Error('User with specified ID does not exist.');
+    }
+
+    if (typeof input.email === 'string') {
+      const isEmailInUse = db.users.find(user => user.email === input.email);
+
+      if (isEmailInUse) {
+        throw new Error('Email already in use.');
+      }
+
+      userToUpdate.email = input.email;
+    }
+
+    if (typeof input.name === 'string') {
+      userToUpdate.name = input.name;
+    }
+
+    if (typeof input.age !== 'undefined') {
+      userToUpdate.age = input.age;
+    }
+
+    return userToUpdate;
+  },
   deleteUser(_, args, { db }) {
     const index = db.users.findIndex(user => user.id === args.id);
 
