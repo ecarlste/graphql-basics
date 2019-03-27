@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node src/index.js",
+    "dev": "nodemon src/index.js --exec babel-node",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -13,7 +13,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/ecarlste/graphql-basics/issues"
   },
@@ -30,10 +30,10 @@
     "eslint-plugin-jsx-a11y": "^6.2.1",
     "eslint-plugin-prettier": "^3.0.1",
     "eslint-plugin-react": "^7.12.4",
+    "nodemon": "^1.18.10",
     "prettier": "^1.16.4"
   },
   "dependencies": {
-    "graphql": "^14.2.0",
     "graphql-yoga": "^1.17.4"
   }
 }
