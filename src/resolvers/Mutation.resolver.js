@@ -69,7 +69,7 @@ export default {
 
     return user;
   },
-  createPost(_, args, { db }) {
+  createPost(_, args, { db, pubsub }) {
     const userExists = db.users.some(user => user.id === args.input.author);
 
     if (!userExists) {
@@ -82,6 +82,10 @@ export default {
     };
 
     db.posts.push(post);
+
+    if (post.published) {
+      pubsub.publish('post', { post });
+    }
 
     return post;
   },

@@ -1,4 +1,9 @@
 export default {
+  post: {
+    subscribe(_, _1, { pubsub }) {
+      return pubsub.asyncIterator('post');
+    }
+  },
   comment: {
     subscribe(_, { postId }, { db, pubsub }) {
       const postToSub = db.posts.find(post => post.id === postId && post.published);
