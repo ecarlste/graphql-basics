@@ -43,12 +43,32 @@ const posts = [
   }
 ];
 
+const comments = [
+  {
+    id: '1',
+    text: 'wonderful idea'
+  },
+  {
+    id: '2',
+    text: 'thanks for the info!'
+  },
+  {
+    id: '3',
+    text: 'you are definitely ready, go for it!!!'
+  },
+  {
+    id: '4',
+    text: 'What is love?'
+  }
+];
+
 const typeDefs = `
   type Query {
     users(query: String): [User!]!
     me: User!
     posts(query: String): [Post!]!
     post: Post!
+    comments: [Comment!]!
   }
 
   type User {
@@ -65,6 +85,11 @@ const typeDefs = `
     body: String!
     published: Boolean!
     author: User!
+  }
+
+  type Comment {
+    id: ID!
+    text: String!
   }
 `;
 
@@ -105,6 +130,9 @@ const resolvers = {
         body: 'best post NA... duh...',
         published: false
       };
+    },
+    comments() {
+      return comments;
     }
   },
   Post: {
