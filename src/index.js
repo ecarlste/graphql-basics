@@ -20,7 +20,7 @@ const users = [
   }
 ];
 
-const posts = [
+let posts = [
   {
     id: '1',
     title: 'foo',
@@ -44,7 +44,7 @@ const posts = [
   }
 ];
 
-const comments = [
+let comments = [
   {
     id: '1',
     text: 'wonderful idea',
@@ -81,9 +81,18 @@ const typeDefs = `
   }
 
   type Mutation {
-    createUser(name: String!, email: String!, age: Int): User!
-    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
-    createComment(text: String!, author: ID!, post: ID!): Comment!
+    createUser(input: CreateUserInput!): User!
+    deleteUser(id: ID!): User!
+    createPost(input: CreatePostInput!): Post!
+    deletePost(id: ID!): Post!
+    createComment(input: CreateCommentInput!): Comment!
+    deleteComment(id: ID!): Comment!
+  }
+
+  input CreateUserInput {
+    name: String!
+    email: String!
+    age: Int
   }
 
   type User {
@@ -95,6 +104,13 @@ const typeDefs = `
     comments: [Comment!]!
   }
 
+  input CreatePostInput {
+    title: String!
+    body: String!
+    published: Boolean!
+    author: ID!
+  }
+
   type Post {
     id: ID!
     title: String!
@@ -102,6 +118,12 @@ const typeDefs = `
     published: Boolean!
     author: User!
     comments: [Comment!]!
+  }
+
+  input CreateCommentInput {
+    text: String!
+    author: ID!
+    post: ID!
   }
 
   type Comment {
@@ -156,7 +178,7 @@ const resolvers = {
   },
   Mutation: {
     createUser(_, args) {
-      const emailTaken = users.some(user => user.email === args.email);
+      const emailTaken = users.some(user => user.email === args.input.email);
 
       if (emailTaken) {
         throw new Error('Email already in use.');
@@ -164,15 +186,38 @@ const resolvers = {
 
       const user = {
         id: uuidv4(),
-        ...args
+        ...args.input
       };
 
       users.push(user);
 
       return user;
     },
+    deleteUser(_, args) {
+      const index = users.findIndex(user => user.id === args.id);
+
+      if (index === -1) {
+        throw new Error('User with specified ID does not exist.');
+      }
+
+      const user = users.splice(index, 1)[0];
+
+      posts = posts.filter(post => {
+        const isMatch = post.author === args.id;
+
+        if (isMatch) {
+          comments = comments.filter(comment => comment.post !== post.id);
+        }
+
+        return !isMatch;
+      });
+
+      comments = comments.filter(comment => comment.author !== args.id);
+
+      return user;
+    },
     createPost(_, args) {
-      const userExists = users.some(user => user.id === args.author);
+      const userExists = users.some(user => user.id === args.input.author);
 
       if (!userExists) {
         throw new Error('Specified user ID not found.');
@@ -180,16 +225,28 @@ const resolvers = {
 
       const post = {
         id: uuidv4(),
-        ...args
+        ...args.input
       };
 
       posts.push(post);
 
       return post;
     },
+    deletePost(_, args) {
+      const index = posts.findIndex(post => post.id === args.id);
+
+      if (index === -1) {
+        throw new Error('Post with specified ID does not exist.');
+      }
+
+      const post = posts.splice(index, 1)[0];
+      comments = comments.filter(comment => comment.post !== args.id);
+
+      return post;
+    },
     createComment(_, args) {
-      const userExists = users.some(user => user.id === args.author);
-      const publishedPostExists = posts.some(post => post.id === args.post && post.published);
+      const userExists = users.some(user => user.id === args.input.author);
+      const publishedPostExists = posts.some(post => post.id === args.input.post && post.published);
 
       // this is a useless error, 3 things could be wrong and the client would have to perform 3 bad requests to find that out
       if (!userExists || !publishedPostExists) {
@@ -198,12 +255,21 @@ const resolvers = {
 
       const comment = {
         id: uuidv4(),
-        ...args
+        ...args.input
       };
 
       comments.push(comment);
 
       return comment;
+    },
+    deleteComment(_, args) {
+      const index = comments.findIndex(comment => comment.id === args.id);
+
+      if (index === -1) {
+        throw new Error('Comment with specified ID does not exist.');
+      }
+
+      return comments.splice(index, 1)[0];
     }
   },
   Post: {
