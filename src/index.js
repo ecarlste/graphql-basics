@@ -82,6 +82,8 @@ const typeDefs = `
 
   type Mutation {
     createUser(name: String!, email: String!, age: Int): User!
+    createPost(title: String!, body: String!, published: Boolean!, author: ID!): Post!
+    createComment(text: String!, author: ID!, post: ID!): Comment!
   }
 
   type User {
@@ -162,14 +164,46 @@ const resolvers = {
 
       const user = {
         id: uuidv4(),
-        name: args.name,
-        email: args.email,
-        age: args.age
+        ...args
       };
 
       users.push(user);
 
       return user;
+    },
+    createPost(_, args) {
+      const userExists = users.some(user => user.id === args.author);
+
+      if (!userExists) {
+        throw new Error('Specified user ID not found.');
+      }
+
+      const post = {
+        id: uuidv4(),
+        ...args
+      };
+
+      posts.push(post);
+
+      return post;
+    },
+    createComment(_, args) {
+      const userExists = users.some(user => user.id === args.author);
+      const publishedPostExists = posts.some(post => post.id === args.post && post.published);
+
+      // this is a useless error, 3 things could be wrong and the client would have to perform 3 bad requests to find that out
+      if (!userExists || !publishedPostExists) {
+        throw new Error('Specified user ID or published post with specified ID not found.');
+      }
+
+      const comment = {
+        id: uuidv4(),
+        ...args
+      };
+
+      comments.push(comment);
+
+      return comment;
     }
   },
   Post: {
