@@ -85,6 +85,27 @@ export default {
 
     return post;
   },
+  updatePost(_, { id, input }, { db }) {
+    const postToUpdate = db.posts.find(post => post.id === id);
+
+    if (!postToUpdate) {
+      throw new Error('Post with specified ID does not exist.');
+    }
+
+    if (typeof input.title === 'string') {
+      postToUpdate.title = input.title;
+    }
+
+    if (typeof input.body === 'string') {
+      postToUpdate.body = input.body;
+    }
+
+    if (typeof input.published === 'boolean') {
+      postToUpdate.published = input.published;
+    }
+
+    return postToUpdate;
+  },
   deletePost(_, args, { db }) {
     const index = db.posts.findIndex(post => post.id === args.id);
 
