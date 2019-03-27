@@ -19,10 +19,35 @@ const users = [
   }
 ];
 
+const posts = [
+  {
+    id: '1',
+    title: 'foo',
+    body: 'subtle art of foo',
+    published: true,
+    author: '1'
+  },
+  {
+    id: '2',
+    title: 'bar',
+    body: 'closely related to foo',
+    published: false,
+    author: '1'
+  },
+  {
+    id: '3',
+    title: 'baz',
+    body: 'quite similar to bar almost...',
+    published: true,
+    author: '2'
+  }
+];
+
 const typeDefs = `
   type Query {
     users(query: String): [User!]!
     me: User!
+    posts(query: String): [Post!]!
     post: Post!
   }
 
@@ -38,6 +63,7 @@ const typeDefs = `
     title: String!
     body: String!
     published: Boolean!
+    author: User!
   }
 `;
 
@@ -60,6 +86,17 @@ const resolvers = {
         age: null
       };
     },
+    posts(_, args) {
+      if (!args.query) {
+        return posts;
+      }
+
+      return posts.filter(
+        post =>
+          post.title.toLowerCase().includes(args.query.toLowerCase()) ||
+          post.body.toLowerCase().includes(args.query.toLowerCase())
+      );
+    },
     post() {
       return {
         id: 'xyz',
@@ -67,6 +104,11 @@ const resolvers = {
         body: 'best post NA... duh...',
         published: false
       };
+    }
+  },
+  Post: {
+    author(parent) {
+      return users.find(user => user.id === parent.author);
     }
   }
 };
