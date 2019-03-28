@@ -66,8 +66,14 @@ type Post {
   comments: [Comment!]!
 }
 
+enum PostEventType {
+  POST_CREATED
+  POST_UPDATED
+  POST_DELETED
+}
+
 type PostSubscriptionPayload {
-  eventType: String!
+  eventType: PostEventType!
   post: Post!
 }
 
@@ -88,7 +94,13 @@ type Comment {
   post: Post!
 }
 
+enum CommentEventType {
+  COMMENT_CREATED
+  COMMENT_UPDATED
+  COMMENT_DELETED
+}
+
 type CommentSubscriptionPayload {
-  eventType: String!
+  eventType: CommentEventType!
   comment: Comment!
 }
