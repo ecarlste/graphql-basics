@@ -4,7 +4,7 @@ export default {
       return pubsub.asyncIterator('post');
     }
   },
-  comment: {
+  commentEvent: {
     subscribe(_, { postId }, { db, pubsub }) {
       const postToSub = db.posts.find(post => post.id === postId && post.published);
 

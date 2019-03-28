@@ -148,11 +148,13 @@ export default {
     };
 
     db.comments.push(comment);
-    pubsub.publish(`comment ${comment.post}`, { comment });
+    pubsub.publish(`comment ${comment.post}`, {
+      commentEvent: { eventType: 'COMMENT_CREATED', comment }
+    });
 
     return comment;
   },
-  updateComment(_, { id, input }, { db }) {
+  updateComment(_, { id, input }, { db, pubsub }) {
     const commentToUpdate = db.comments.find(comment => comment.id === id);
 
     if (!commentToUpdate) {
@@ -163,15 +165,26 @@ export default {
       commentToUpdate.text = input.text;
     }
 
+    if (Object.keys(input).length > 0) {
+      pubsub.publish(`comment ${commentToUpdate.post}`, {
+        commentEvent: { eventType: 'COMMENT_UPDATED', comment: commentToUpdate }
+      });
+    }
+
     return commentToUpdate;
   },
-  deleteComment(_, args, { db }) {
+  deleteComment(_, args, { db, pubsub }) {
     const index = db.comments.findIndex(comment => comment.id === args.id);
 
     if (index === -1) {
       throw new Error('Comment with specified ID does not exist.');
     }
 
-    return db.comments.splice(index, 1)[0];
+    const deletedComment = db.comments.splice(index, 1)[0];
+    pubsub.publish(`comment ${deletedComment.post}`, {
+      commentEvent: { eventType: 'COMMENT_DELETED', deletedComment }
+    });
+
+    return deletedComment;
   }
 };
