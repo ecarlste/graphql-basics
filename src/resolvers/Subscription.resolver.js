@@ -1,5 +1,5 @@
 export default {
-  post: {
+  postEvent: {
     subscribe(_, _1, { pubsub }) {
       return pubsub.asyncIterator('post');
     }

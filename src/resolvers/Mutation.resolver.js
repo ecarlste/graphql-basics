@@ -84,13 +84,14 @@ export default {
     db.posts.push(post);
 
     if (post.published) {
-      pubsub.publish('post', { post });
+      pubsub.publish('post', { postEvent: { eventType: 'POST_CREATED', post } });
     }
 
     return post;
   },
-  updatePost(_, { id, input }, { db }) {
+  updatePost(_, { id, input }, { db, pubsub }) {
     const postToUpdate = db.posts.find(post => post.id === id);
+    const wasPublished = postToUpdate.published;
 
     if (!postToUpdate) {
       throw new Error('Post with specified ID does not exist.');
@@ -108,9 +109,13 @@ export default {
       postToUpdate.published = input.published;
     }
 
+    if (wasPublished || postToUpdate.published) {
+      pubsub.publish('post', { postEvent: { eventType: 'POST_UPDATE', post: postToUpdate } });
+    }
+
     return postToUpdate;
   },
-  deletePost(_, args, { db }) {
+  deletePost(_, args, { db, pubsub }) {
     const index = db.posts.findIndex(post => post.id === args.id);
 
     if (index === -1) {
@@ -119,6 +124,10 @@ export default {
 
     const post = db.posts.splice(index, 1)[0];
     db.setComments(db.comments.filter(comment => comment.post !== args.id));
+
+    if (post.published) {
+      pubsub.publish('post', { postEvent: { eventType: 'POST_DELETED', post } });
+    }
 
     return post;
   },
